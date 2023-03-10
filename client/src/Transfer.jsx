@@ -3,6 +3,7 @@ import server from "./server";
 import * as secp from 'ethereum-cryptography/secp256k1';
 import { keccak256 } from 'ethereum-cryptography/keccak';
 import { utf8ToBytes } from 'ethereum-cryptography/utils';
+import { toHex } from 'ethereum-cryptography/utils';
 
 function Transfer({ address, privateKey, setBalance }) {
   const [sendAmount, setSendAmount] = useState("");
@@ -27,11 +28,9 @@ function Transfer({ address, privateKey, setBalance }) {
     transaction.set(recipientBytes, addressBytes.length);
     transaction.set(amountBytes, addressBytes.length + recipientBytes.length);
 
-    console.log(privateKey)
+    let transactionHash = keccak256(transaction);
 
-    const signature = secp.sign(keccak256(transaction), privateKey);
-
-    console.log(signature)
+    const signature = await secp.sign(transactionHash, privateKey, {recovered: true});
 
     try {
       const {
@@ -40,7 +39,7 @@ function Transfer({ address, privateKey, setBalance }) {
         sender: address,
         amount: parseInt(sendAmount),
         recipient,
-        // signature: toHex(signature.signature)
+        signature,
       });
       setBalance(balance);
     } catch (ex) {
